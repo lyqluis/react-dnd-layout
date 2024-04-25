@@ -1,20 +1,26 @@
 import styled from "styled-components"
+import { currentDragItem } from "./drag"
 
-interface DragItem {
-	id: string | number
-	title: string
-	row: number // number of rows occupied
-	column: number // number of columns occupied
-}
-
-interface DragItemProps extends DragItem {
-	children?: React.ReactNode
-}
-
-const DragItem: React.FC<DragItemProps> = ({ children }) => {
-  // TODO set event to store
-	const onDrageStart = (e) => console.log("drag start", e)
-	const onDragEnd = (e) => console.log("drag end", e)
+const DragItem: React.FC<DragItemProps> = ({
+	id,
+	title,
+	row,
+	column,
+	children,
+}) => {
+	// TODO set event to store
+	const onDrageStart = (e) => {
+		console.log("drag start", e)
+		// store currnt drag item
+		currentDragItem.id = id
+		currentDragItem.title = title
+		currentDragItem.row = row
+		currentDragItem.column = column
+	}
+	const onDragEnd = (e) => {
+		console.log("drag end", e)
+		// currentDragItem.rawData = null
+	}
 
 	return (
 		<Wrapper
@@ -22,13 +28,14 @@ const DragItem: React.FC<DragItemProps> = ({ children }) => {
 			onDragStart={onDrageStart}
 			onDragEnd={onDragEnd}
 		>
-			<p>this is a dragable item</p>
+			<p>dragable item</p>
 			{children}
 		</Wrapper>
 	)
 }
 
 const Wrapper = styled.div`
+	display: flex;
 	width: 100px;
 	height: 60px;
 	border-radius: 4px;
