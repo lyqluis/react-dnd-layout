@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react"
 import styled from "styled-components"
-import { currentDragItem, isWithinCell } from "./drag"
+import { currentDragItem, isWithinCell, resetCurrentDragItem } from "./drag"
+import DroppedItem from "./DroppedItem"
 
 interface DragDropAreaProps {
 	row: number
@@ -11,8 +12,9 @@ interface DragDropAreaProps {
 const DragDropArea: React.FC<DragDropAreaProps> = ({ row, column, gap }) => {
 	const dropContainer = useRef(null)
 	const cellState = useRef({ row, column, gap, width: 0, height: 0 })
-	// TODO ? is necessary to set current drag item to reactive state ?
-	const [current, setCurrent] = useState(currentDragItem)
+	// const [currentState, setCurrentState] =
+	// 	useState<CurrentDragItem>(currentDragItem)
+	const [droppedList, setDroppedList] = useState<CurrentDragItem[]>([])
 
 	// get container's cells' width, height
 	useEffect(() => {
@@ -50,21 +52,38 @@ const DragDropArea: React.FC<DragDropAreaProps> = ({ row, column, gap }) => {
 		// update current drag item's state
 		console.log("drag enter", e, e.nativeEvent.offsetX)
 		const { offsetX, offsetY } = e.nativeEvent
-		const x = getCellX(offsetX)
-		const y = getCellY(offsetY)
+		const x = getCellX(offsetX) - getCellX(currentDragItem.offsetX ?? 0)
+		const y = getCellY(offsetY) - getCellY(currentDragItem.offsetY ?? 0)
 		currentDragItem.x = x
 		currentDragItem.y = y
 		currentDragItem.isInArea = true
+		// setCurrentState({ ...currentDragItem })
 	}
 
 	const onDragOver = (e) => {
 		e.preventDefault()
 		// update current drag item's state
 		const { offsetX, offsetY } = e.nativeEvent
-		const x = getCellX(offsetX)
-		const y = getCellY(offsetY)
+		const x = getCellX(offsetX) - getCellX(currentDragItem.offsetX ?? 0)
+		const y = getCellY(offsetY) - getCellY(currentDragItem.offsetY ?? 0)
 		currentDragItem.x = x
 		currentDragItem.y = y
+		// setCurrentState({ ...currentDragItem })
+		console.log(
+			"drag over",
+			x,
+			y,
+			"offset",
+			offsetX,
+			offsetY,
+			getCellX(offsetX),
+			getCellY(offsetY),
+			"cell offset",
+			currentDragItem.offsetX,
+			currentDragItem.offsetY,
+			getCellX(currentDragItem.offsetX ?? 0),
+			getCellY(currentDragItem.offsetY ?? 0)
+		)
 	}
 
 	const onDragLeave = (e) => {
@@ -75,7 +94,6 @@ const DragDropArea: React.FC<DragDropAreaProps> = ({ row, column, gap }) => {
 	const onDrop = (e) => {
 		e.preventDefault()
 
-		// todo push current drag item to a list
 		const { x, y, row, column } = currentDragItem
 		console.log("current drag item", x, y)
 
@@ -84,6 +102,15 @@ const DragDropArea: React.FC<DragDropAreaProps> = ({ row, column, gap }) => {
 			[x, y, x + row - 1, y + column - 1]
 		)
 		console.log("is in cell", isInCells)
+		if (isInCells) {
+			const restDroppedItemList = droppedList.filter(
+				(item) => item.id !== currentDragItem.id
+			)
+			// push current drag item to a list
+			setDroppedList([...restDroppedItemList, { ...currentDragItem }])
+		}
+		resetCurrentDragItem()
+		// setCurrentState({ ...currentDragItem })
 	}
 
 	return (
@@ -97,8 +124,6 @@ const DragDropArea: React.FC<DragDropAreaProps> = ({ row, column, gap }) => {
 			onDragLeave={onDragLeave}
 			onDrop={onDrop}
 			onClick={handleClick}
-			$currentX=''
-			$currentY=''
 		>
 			<div className='drag-drop-area__grids'>
 				{new Array(row * column).fill(null).map((val, i) => (
@@ -108,7 +133,20 @@ const DragDropArea: React.FC<DragDropAreaProps> = ({ row, column, gap }) => {
 					></div>
 				))}
 			</div>
-			<div className='drag-drop-area__box'></div>
+			{/* create dropped boxes depend to box list */}
+			<div className='drag-drop-area__box'>
+				{droppedList.map((box) => (
+					<DroppedItem
+						className='area-cell__dropped'
+						key={`dropped-${box.id}`}
+						data={box}
+						style={
+							box.id === currentDragItem.id ? { pointerEvents: "none" } : {}
+						}
+					></DroppedItem>
+				))}
+				{/* // TODO MOVE MASK */}
+			</div>
 		</Wrapper>
 	)
 }
@@ -117,7 +155,7 @@ const Wrapper = styled.div`
 	width: 100vw;
 	height: 500px;
 	background: lightblue;
-  position: relative;
+	position: relative;
 
 	.drag-drop-area__box,
 	.drag-drop-area__grids {
@@ -126,21 +164,20 @@ const Wrapper = styled.div`
 		padding: ${(props) => props.$gap}px;
 		display: grid;
 		gap: ${(props) => props.$gap}px;
-		grid-template-columns: repeat(${(props) => props.$row}, auto);
-		grid-template-rows: repeat(${(props) => props.$column}, auto);
+		grid-template-columns: repeat(
+			${(props) => props.$row},
+			1fr
+		); /* // !! use 'auto' will cause grid expanded if it has children */
+		grid-template-rows: repeat(${(props) => props.$column}, 1fr);
 
 		.area-cell {
-			// todo auto width & height
-			/* width: 100px; */
-			/* height: 100px; */
 			border: 1px solid #000;
 			background: #eee;
-			pointer-events: none; // !! otherwise offset in event is related to cell not the whole area
-		}
+			pointer-events: none; /* // !! otherwise offset in event is related to cell not the whole area */
 
-		&__filled {
-			background: #000;
-			grid-area: 1 / 1 / 3 / 3;
+			&__dropped {
+				background: #aaa;
+			}
 		}
 	}
 
@@ -148,7 +185,7 @@ const Wrapper = styled.div`
 		position: absolute;
 		top: 0;
 		left: 0;
-		pointer-events: none;
+		/* pointer-events: none; */
 		overflow: hidden;
 	}
 `

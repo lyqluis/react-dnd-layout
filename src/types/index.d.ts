@@ -9,8 +9,13 @@ interface DragItemProps extends DragItem {
 	children?: React.ReactNode
 }
 
-interface currentDragItem extends DragItem {
+interface CurrentDragItem extends DragItem {
 	x: number // cell's x index
-	y: numer  // cell's y index
+	y: numer // cell's y index
+	offsetX?: number // item 内的偏移量
+	offsetY?: number
 	isInArea: boolean
+	isDragged: boolean
 }
+
+interface DroppedItem extends CurrentDragItem {}

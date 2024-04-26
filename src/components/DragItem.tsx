@@ -9,7 +9,7 @@ const DragItem: React.FC<DragItemProps> = ({
 	children,
 }) => {
 	// TODO set event to store
-	const onDrageStart = (e) => {
+	const onDragStart = (e) => {
 		console.log("drag start", e)
 		// store currnt drag item
 		currentDragItem.id = id
@@ -25,7 +25,7 @@ const DragItem: React.FC<DragItemProps> = ({
 	return (
 		<Wrapper
 			draggable='true'
-			onDragStart={onDrageStart}
+			onDragStart={onDragStart}
 			onDragEnd={onDragEnd}
 		>
 			<p>dragable item</p>
