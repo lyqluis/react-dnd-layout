@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from "react"
 import styled from "styled-components"
-import { currentDragItem, isWithinCell, resetCurrentDragItem } from "./drag"
+import { defaultDragState, dragMap, isWithinCell } from "./drag"
 import DroppedItem from "./DroppedItem"
+import DragMask from "./DragMask"
 
 interface DragDropAreaProps {
 	row: number
@@ -12,9 +13,11 @@ interface DragDropAreaProps {
 const DragDropArea: React.FC<DragDropAreaProps> = ({ row, column, gap }) => {
 	const dropContainer = useRef(null)
 	const cellState = useRef({ row, column, gap, width: 0, height: 0 })
-	// const [currentState, setCurrentState] =
-	// 	useState<CurrentDragItem>(currentDragItem)
-	const [droppedList, setDroppedList] = useState<CurrentDragItem[]>([])
+	const [currentDragState, setCurrentDragState] =
+		useState<DragItemData>(defaultDragState)
+	const [droppedList, setDroppedList] = useState<DragItemData[]>([])
+	const removeDroppedItem = (id) =>
+		setDroppedList((list) => list.filter((item) => item.id !== id))
 
 	// get container's cells' width, height
 	useEffect(() => {
@@ -50,51 +53,67 @@ const DragDropArea: React.FC<DragDropAreaProps> = ({ row, column, gap }) => {
 		e.preventDefault()
 		// TODO throttle
 		// update current drag item's state
-		console.log("drag enter", e, e.nativeEvent.offsetX)
+		console.log("drag enter", e.nativeEvent.offsetX, currentDragState)
+		const dragMapState = dragMap.get("current")
 		const { offsetX, offsetY } = e.nativeEvent
-		const x = getCellX(offsetX) - getCellX(currentDragItem.offsetX ?? 0)
-		const y = getCellY(offsetY) - getCellY(currentDragItem.offsetY ?? 0)
-		currentDragItem.x = x
-		currentDragItem.y = y
-		currentDragItem.isInArea = true
-		// setCurrentState({ ...currentDragItem })
+		const x = getCellX(offsetX) - getCellX(dragMapState?.offsetX ?? 0)
+		const y = getCellY(offsetY) - getCellY(dragMapState?.offsetY ?? 0)
+		const isInArea = true
+		// currentDragItem.x = x
+		// currentDragItem.y = y
+		// const isInArea = (currentDragItem.isInArea = true)
+
+		console.log("map state", dragMapState)
+		const newDragState = { ...dragMapState, x, y, isInArea }
+		setCurrentDragState(newDragState)
+		console.log("new drag state", newDragState)
 	}
 
 	const onDragOver = (e) => {
 		e.preventDefault()
 		// update current drag item's state
 		const { offsetX, offsetY } = e.nativeEvent
-		const x = getCellX(offsetX) - getCellX(currentDragItem.offsetX ?? 0)
-		const y = getCellY(offsetY) - getCellY(currentDragItem.offsetY ?? 0)
-		currentDragItem.x = x
-		currentDragItem.y = y
-		// setCurrentState({ ...currentDragItem })
-		console.log(
-			"drag over",
-			x,
-			y,
-			"offset",
-			offsetX,
-			offsetY,
-			getCellX(offsetX),
-			getCellY(offsetY),
-			"cell offset",
-			currentDragItem.offsetX,
-			currentDragItem.offsetY,
-			getCellX(currentDragItem.offsetX ?? 0),
-			getCellY(currentDragItem.offsetY ?? 0)
-		)
+
+		const x = getCellX(offsetX) - getCellX(currentDragState.offsetX ?? 0)
+		const y = getCellY(offsetY) - getCellY(currentDragState.offsetY ?? 0)
+		const isInArea = true
+		const newDragState = { ...currentDragState, x, y, isInArea }
+		dragMap.set("current", newDragState)
+		setCurrentDragState(newDragState)
+		// TODO one dropped item overlaps another, with its position being calculated starting from zero
+		// 1. css pointer-event setting
+		// 2. add a new caculation
+
+		// console.log(
+		// 	"drag over",
+		// 	x,
+		// 	y,
+		// 	"offset",
+		// 	offsetX,
+		// 	offsetY,
+		// 	getCellX(offsetX),
+		// 	getCellY(offsetY),
+		// 	"cell offset",
+		// 	currentDragItem.offsetX,
+		// 	currentDragItem.offsetY,
+		// 	getCellX(currentDragItem.offsetX ?? 0),
+		// 	getCellY(currentDragItem.offsetY ?? 0),
+		// 	currentDragState
+		// )
 	}
 
 	const onDragLeave = (e) => {
 		e.preventDefault()
-		// todo delete current drag item
-		currentDragItem.isInArea = false
+		console.log("on drag leave", Date.now())
+
+		const isInArea = false
+		setCurrentDragState({ ...currentDragState, isInArea })
 	}
+
 	const onDrop = (e) => {
 		e.preventDefault()
 
-		const { x, y, row, column } = currentDragItem
+		const { x, y, row, column } = currentDragState
 		console.log("current drag item", x, y)
 
 		const isInCells = isWithinCell(
@@ -104,50 +123,66 @@ const DragDropArea: React.FC<DragDropAreaProps> = ({ row, column, gap }) => {
 		console.log("is in cell", isInCells)
 		if (isInCells) {
 			const restDroppedItemList = droppedList.filter(
-				(item) => item.id !== currentDragItem.id
+				(item) => item.id !== currentDragState.id
 			)
 			// push current drag item to a list
-			setDroppedList([...restDroppedItemList, { ...currentDragItem }])
+			setDroppedList([...restDroppedItemList, { ...currentDragState }])
 		}
-		resetCurrentDragItem()
-		// setCurrentState({ ...currentDragItem })
+		// reset current drag item
+		setCurrentDragState(defaultDragState)
 	}
 
 	return (
-		<Wrapper
-			ref={dropContainer}
-			$row={row}
-			$column={column}
-			$gap={gap}
-			onDragEnter={onDragEnter}
-			onDragOver={onDragOver}
-			onDragLeave={onDragLeave}
-			onDrop={onDrop}
-			onClick={handleClick}
-		>
-			<div className='drag-drop-area__grids'>
-				{new Array(row * column).fill(null).map((val, i) => (
-					<div
-						className='area-cell'
-						key={`key-${i}`}
-					></div>
-				))}
+		<>
+			<Wrapper
+				ref={dropContainer}
+				$row={row}
+				$column={column}
+				$gap={gap}
+				onDragEnter={onDragEnter}
+				onDragOver={onDragOver}
+				onDragLeave={onDragLeave}
+				onDrop={onDrop}
+				onClick={handleClick}
+			>
+				<div className='drag-drop-area__grids'>
+					{new Array(row * column).fill(null).map((val, i) => (
+						<div
+							className='area-cell'
+							key={`key-${i}`}
+						></div>
+					))}
+				</div>
+				{/* create dropped boxes depend to box list */}
+				<div className='drag-drop-area__box'>
+					{droppedList.map((box) => (
+						<DroppedItem
+							className='area-cell__dropped'
+							key={`dropped-${box.id}`}
+							data={box}
+							style={{
+								pointerEvents:
+									currentDragState?.isDragged && box.id !== currentDragState?.id
+										? "none"
+										: "all",
+							}}
+							onRemove={removeDroppedItem}
+						></DroppedItem>
+					))}
+					{/* // TODO Drag Mask*/}
+					{currentDragState?.isInArea && currentDragState?.isDragged && (
+						<DragMask
+							dragData={currentDragState}
+							cellData={cellState.current}
+						></DragMask>
+					)}
+				</div>
+			</Wrapper>
+			<div>
+				current drag item:
+				{JSON.stringify(currentDragState)}
 			</div>
-			{/* create dropped boxes depend to box list */}
-			<div className='drag-drop-area__box'>
-				{droppedList.map((box) => (
-					<DroppedItem
-						className='area-cell__dropped'
-						key={`dropped-${box.id}`}
-						data={box}
-						style={
-							box.id === currentDragItem.id ? { pointerEvents: "none" } : {}
-						}
-					></DroppedItem>
-				))}
-				{/* // TODO MOVE MASK */}
-			</div>
-		</Wrapper>
+		</>
 	)
 }
 

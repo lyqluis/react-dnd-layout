@@ -5,4 +5,15 @@ const Tst = () => {
 	return <></>
 }
 
+class DragMap1<T extends DragItem> {
+	map = new Map<string, T>()
+}
+
+class DragMap2<T extends DragItem> {
+	constructor() {
+		this.map = new Map<string, T>()
+	}
+}
+
+
 export default Tst

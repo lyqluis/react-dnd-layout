@@ -1,5 +1,5 @@
 import styled from "styled-components"
-import { currentDragItem } from "./drag"
+import { dragMap } from "./drag"
 
 const DragItem: React.FC<DragItemProps> = ({
 	id,
@@ -12,14 +12,19 @@ const DragItem: React.FC<DragItemProps> = ({
 	const onDragStart = (e) => {
 		console.log("drag start", e)
 		// store currnt drag item
-		currentDragItem.id = id
-		currentDragItem.title = title
-		currentDragItem.row = row
-		currentDragItem.column = column
+		const isDragged = true
+		const dragItem = { id, title, row, column, isDragged }
+		dragMap.set("current", dragItem)
+		// todo delete
+		// currentDragItem.id = id
+		// currentDragItem.title = title
+		// currentDragItem.row = row
+		// currentDragItem.column = column
 	}
 	const onDragEnd = (e) => {
 		console.log("drag end", e)
 		// currentDragItem.rawData = null
+		dragMap.remove("current")
 	}
 
 	return (

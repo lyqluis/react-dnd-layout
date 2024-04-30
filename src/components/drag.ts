@@ -1,4 +1,4 @@
-const currentDragItem: CurrentDragItem = {
+const defaultDragState: DragItemData = {
 	id: 0,
 	x: 0,
 	y: 0,
@@ -7,15 +7,24 @@ const currentDragItem: CurrentDragItem = {
 	isInArea: false,
 	isDragged: false,
 }
-const resetCurrentDragItem = () => {
-	currentDragItem.id = 0
-	currentDragItem.x = 0
-	currentDragItem.y = 0
-	currentDragItem.row = 1
-	currentDragItem.column = 1
-	currentDragItem.isInArea = false
-	currentDragItem.isDragged = false
+
+class DragMap<T extends DragItem> {
+	map = new Map<string | number, T>()
+
+	get(key: string | number): T | undefined {
+		return this.map.get(key)!
+	}
+
+	set(key: string | number, data: T) {
+		this.map.set(key, data)
+	}
+
+	remove(key: string | number) {
+		this.map.delete(key)
+	}
 }
+
+const dragMap = new DragMap()
 
 type CellPosition = [number, number, number, number] // item 占据的左上 cell 坐标和右下 cell 坐标
 /**
@@ -38,4 +47,4 @@ const isWithinCell = (parent: CellPosition, child: CellPosition) => {
 
 // TODO use a map to store dropped dragItem
 
-export { currentDragItem, isWithinCell, resetCurrentDragItem }
+export { defaultDragState, isWithinCell, dragMap }
