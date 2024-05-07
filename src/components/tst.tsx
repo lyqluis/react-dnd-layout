@@ -1,19 +1,43 @@
 import { useState } from "react"
+
 const Tst = () => {
-	const [list, setList] = useState([])
-  setList([...list, .'d'])
-	return <></>
-}
-
-class DragMap1<T extends DragItem> {
-	map = new Map<string, T>()
-}
-
-class DragMap2<T extends DragItem> {
-	constructor() {
-		this.map = new Map<string, T>()
+	const [isDragged, setIsDragged] = useState(false)
+	const onDragStart = (e) => {
+		e.preventDefault()
+		console.log("drag start")
+		setIsDragged(true)
 	}
+	const onDragEnd = (e) => {
+		e.preventDefault()
+		console.log("drag end")
+
+		setIsDragged(false)
+	}
+
+	return (
+		<div
+			draggable
+			onDragStart={onDragStart}
+			onDragEnd={onDragEnd}
+		>
+			<TstComponent
+				isDragged={isDragged}
+				style={{ transform: isDragged ? `translate(100px, 100px)` : "" }}
+			></TstComponent>
+		</div>
+	)
 }
 
+const TstComponent = ({ isDragged, style }) => {
+	return (
+		<div
+			// style={{ transform: isDragged ? `translate(100px, 100px)` : "" }}
+			style={{ color: isDragged ? `blue` : "black" }}
+			// style={{ ...style }}
+		>
+			this is tst-component
+		</div>
+	)
+}
 
 export default Tst

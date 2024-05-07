@@ -5,5 +5,6 @@
 ### bug
 - [x] droppedItem 二次拖拽移动重叠到其他 droppedItem 时，会导致坐标更新到其他 droppedItem 内，而不是 area 内的坐标
   - 拖拽时将其他 droppedItem 的 `pointer-events` 设置成 `none`
-- [ ] 二次拖拽移动重叠到自身原先的位置时发生偏移，情况同上
-- [ ] DragMask 移动位置稍有偏移
+- [x] 二次拖拽移动重叠到自身原先的位置时发生偏移，情况同上
+  - 使用 `transform: translate(-9999999px, -9999999px)` 位移该元素，从而不会碰到改元素
+- [x] DragMask 移动位置稍有偏移

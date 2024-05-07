@@ -2,9 +2,8 @@ import { useMemo } from "react"
 import styled from "styled-components"
 
 const DragMask = ({ dragData, cellData }) => {
-	// TODO since grid-area doesn't have animation affect
+	// since grid-area doesn't have animation affect
 	// use width & height & gap to transform instead
-	const isShow = dragData.isInArea && dragData.isDragged
 	const { width: cellWidth, height: cellHeight, gap } = cellData
 	const { row, column, x, y } = dragData
 
@@ -16,9 +15,9 @@ const DragMask = ({ dragData, cellData }) => {
 
 	const transStyle = useMemo(() => {
 		// transform
-		const translateX = (cellWidth + gap) * x
-		const translateY = (cellHeight + gap) * y
-		// todo
+		const translateX = gap + (cellWidth + gap) * x
+		const translateY = gap + (cellHeight + gap) * y
+		// TODO style
 		// const background
 		const transform = `translate(${translateX}px, ${translateY}px)`
 		return { transform }

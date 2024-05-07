@@ -15,15 +15,11 @@ const DragItem: React.FC<DragItemProps> = ({
 		const isDragged = true
 		const dragItem = { id, title, row, column, isDragged }
 		dragMap.set("current", dragItem)
-		// todo delete
-		// currentDragItem.id = id
-		// currentDragItem.title = title
-		// currentDragItem.row = row
-		// currentDragItem.column = column
 	}
 	const onDragEnd = (e) => {
 		console.log("drag end", e)
 		// currentDragItem.rawData = null
+		const isDragged = false
 		dragMap.remove("current")
 	}
 
