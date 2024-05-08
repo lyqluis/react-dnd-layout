@@ -158,16 +158,6 @@ const DragDropArea: React.FC<DragDropAreaProps> = ({ row, column, gap }) => {
 							data={box}
 							current={currentDragState}
 							onRemove={removeDroppedItem}
-							// style={{
-							// 	pointerEvents:
-							// 		currentDragState.isDragged && box.id === currentDragState.id
-							// 			? "all"
-							// 			: "none",
-							// 	transform:
-							// 		currentDragState.isDragged && box.id === currentDragState.id
-							// 			? `translate(-999999999px, -9999999999px)`
-							// 			: "",
-							// }}
 						></DroppedItem>
 					))}
 					{/* // TODO Drag Mask*/}
