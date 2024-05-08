@@ -4,7 +4,7 @@ import { dragMap } from "./drag"
 
 const DroppedItem: React.FC<{
 	className: string
-	data: DroppedItem
+	data: DragItemData
 	style?: React.CSSProperties
 	current: DragItemData
 	children?: React.ReactNode
@@ -21,19 +21,25 @@ const DroppedItem: React.FC<{
 	const dynamicStyle = useMemo(() => {
 		const opacity = isDragged ? 0.5 : 1
 		const pointerEvents =
-			current.id === 0
+			current.id === 0 || current.id === undefined
 				? "all"
 				: isDragged && data.id === current.id
 				? "all"
 				: "none"
 		const transform =
-			isDragged && current.id !== 0 && data.id === current.id
+			isDragged && data.id === current.id
 				? `translate(-999999999px, -9999999999px)`
 				: ""
-		return { opacity, pointerEvents, transform }
-	}, [isDragged, current.id])
+		// console.log("memo dynamic style", opacity, pointerEvents, transform)
 
-	const handleRemove = () => data.id && onRemove(data.id)
+		return {
+			opacity,
+			pointerEvents,
+			transform,
+		}
+	}, [isDragged, current])
+
+	const handleRemove = () => onRemove(data.id)
 	const onDragStart = (e) => {
 		console.log("drag start", e)
 		const isDragged = true
@@ -43,7 +49,9 @@ const DroppedItem: React.FC<{
 		const { offsetX, offsetY } = e.nativeEvent
 		const dragItem = { id, title, row, column, offsetX, offsetY, isDragged }
 		dragMap.set("current", dragItem)
+		console.log("dropped drag start", dragMap.get("current"))
 	}
+
 	const onDragEnd = (e) => {
 		console.log("drag end", e, isDragged)
 		dragMap.remove("current")
@@ -53,8 +61,11 @@ const DroppedItem: React.FC<{
 	return (
 		<Wrapper
 			className={className}
-			style={{ ...style, ...memoStyle, ...dynamicStyle }}
-			// style={{ gridArea, opacity, pointerEvents, transform }}
+			style={{
+				...style,
+				...memoStyle,
+				...dynamicStyle,
+			}}
 			draggable='true'
 			onDragStart={onDragStart}
 			onDragEnd={onDragEnd}

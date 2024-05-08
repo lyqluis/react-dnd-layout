@@ -41,3 +41,14 @@ const TstComponent = ({ isDragged, style }) => {
 }
 
 export default Tst
+
+
+const x = getCellX(offsetX) - getCellX(dragMapState?.offsetX ?? 0)
+const y = getCellY(offsetY) - getCellY(dragMapState?.offsetY ?? 0)
+const isInArea = true
+const isDragged = true
+
+console.log("map state", dragMapState)
+const newDragState = { ...dragMapState, x, y, isInArea, isDragged }
+// setCurrentDragState
+

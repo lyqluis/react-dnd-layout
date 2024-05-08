@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react"
 import styled from "styled-components"
-import { defaultDragState, dragMap, isWithinCell } from "./drag"
+import { defaultDragState, dragMap, isOverlapping, isWithinCell } from "./drag"
 import DroppedItem from "./DroppedItem"
 import DragMask from "./DragMask"
 
@@ -12,11 +12,11 @@ interface DragDropAreaProps {
 
 const DragDropArea: React.FC<DragDropAreaProps> = ({ row, column, gap }) => {
 	const dropContainer = useRef(null)
-	const cellState = useRef({ row, column, gap, width: 0, height: 0 })
+	const cellState = useRef<Cell>({ row, column, gap, width: 0, height: 0 })
 	const [currentDragState, setCurrentDragState] =
 		useState<DragItemData>(defaultDragState)
 	const [droppedList, setDroppedList] = useState<DragItemData[]>([])
-	const removeDroppedItem = (id) =>
+	const removeDroppedItem = (id: number | string) =>
 		setDroppedList((list) => list.filter((item) => item.id !== id))
 
 	// get container's cells' width, height
@@ -45,61 +45,77 @@ const DragDropArea: React.FC<DragDropAreaProps> = ({ row, column, gap }) => {
 
 	const handleClick = (e) => {
 		const { offsetX, offsetY } = e.nativeEvent
-		console.log("click", e, offsetX, offsetY)
-		console.log("click cell index", getCellX(offsetX), getCellY(offsetY))
+		const x = getCellX(offsetX)
+		const y = getCellY(offsetY)
+		const id = 2
+		console.log("click cell index", x, getCellY(offsetY))
+		const isNotOverlapWithDroppedItem = !droppedList
+			.filter((box) => box.id !== id)
+			.some((box) =>
+				isOverlapping(
+					[box.x, box.y, box.x + box.row - 1, box.y + box.column - 1],
+					[x, y, x + 1, y + 2]
+				)
+			)
+		console.log("pos is legal", isNotOverlapWithDroppedItem)
 	}
+
+	const isLegalPostion = useMemo(() => {
+		const { x, y, row, column, id } = currentDragState
+		const currentCellPosition = [x, y, x + row - 1, y + column - 1]
+		const isInCells = isWithinCell(
+			[0, 0, cellState.current.row - 1, cellState.current.column - 1],
+			currentCellPosition
+		)
+		const isNotOverlapWithDroppedItem = !droppedList
+			.filter((box) => box.id !== id)
+			.some((box) =>
+				isOverlapping(
+					[box.x, box.y, box.x + box.row - 1, box.y + box.column - 1],
+					currentCellPosition
+				)
+			)
+		// console.log("memo is legal", isInCells, isNotOverlapWithDroppedItem)
+		return isInCells && isNotOverlapWithDroppedItem
+	}, [currentDragState])
 
 	const onDragEnter = (e) => {
 		e.preventDefault()
-		// TODO throttle
 		// update current drag item's state
-		console.log("drag enter", e.nativeEvent.offsetX, currentDragState)
 		const dragMapState = dragMap.get("current")
+		console.log("drag enter", currentDragState, dragMapState)
 		const { offsetX, offsetY } = e.nativeEvent
 		const x = getCellX(offsetX) - getCellX(dragMapState?.offsetX ?? 0)
 		const y = getCellY(offsetY) - getCellY(dragMapState?.offsetY ?? 0)
 		const isInArea = true
-		const isDragged = true
-
-		console.log("map state", dragMapState)
-		const newDragState = { ...dragMapState, x, y, isInArea, isDragged }
+		const newDragState = Object.assign({}, dragMapState, { x, y, isInArea })
 		setCurrentDragState(newDragState)
-		console.log("new drag state", newDragState)
 	}
 
 	const onDragOver = (e) => {
 		e.preventDefault()
+		// TODO throttle
 		// update current drag item's state
+		console.log("drag over", currentDragState)
 		const { offsetX, offsetY } = e.nativeEvent
-
-		const x = getCellX(offsetX) - getCellX(currentDragState.offsetX ?? 0)
-		const y = getCellY(offsetY) - getCellY(currentDragState.offsetY ?? 0)
+		const x = getCellX(offsetX) - getCellX(currentDragState?.offsetX ?? 0)
+		const y = getCellY(offsetY) - getCellY(currentDragState?.offsetY ?? 0)
 		const isInArea = true
-		const newDragState = { ...currentDragState, x, y, isInArea }
-		dragMap.set("current", newDragState)
-		setCurrentDragState(newDragState)
+		setCurrentDragState((preState) => ({ ...preState, x, y, isInArea }))
 	}
 
 	const onDragLeave = (e) => {
 		e.preventDefault()
 		console.log("on drag leave", Date.now())
-		// const isInArea = false
-		// setCurrentDragState({ ...currentDragState, isInArea })
-		setCurrentDragState(defaultDragState)
+		const isInArea = false
+		setCurrentDragState((preState) => ({ ...preState, isInArea }))
 	}
 
 	const onDrop = (e) => {
 		e.preventDefault()
+		console.log("on drop")
 
-		const { x, y, row, column } = currentDragState
-		console.log("current drag item", x, y)
-
-		const isInCells = isWithinCell(
-			[0, 0, cellState.current.row - 1, cellState.current.column - 1],
-			[x, y, x + row - 1, y + column - 1]
-		)
-		console.log("is in cell", isInCells)
-		if (isInCells) {
+		if (isLegalPostion) {
 			const restDroppedItemList = droppedList.filter(
 				(item) => item.id !== currentDragState.id
 			)
@@ -124,10 +140,10 @@ const DragDropArea: React.FC<DragDropAreaProps> = ({ row, column, gap }) => {
 				onDragOver={onDragOver}
 				onDragLeave={onDragLeave}
 				onDrop={onDrop}
-				onClick={handleClick}
+				// onClick={handleClick}
 			>
 				<div className='drag-drop-area__grids'>
-					{new Array(row * column).fill(null).map((val, i) => (
+					{new Array(row * column).fill(null).map((_, i) => (
 						<div
 							className='area-cell'
 							key={`key-${i}`}
@@ -142,6 +158,16 @@ const DragDropArea: React.FC<DragDropAreaProps> = ({ row, column, gap }) => {
 							data={box}
 							current={currentDragState}
 							onRemove={removeDroppedItem}
+							// style={{
+							// 	pointerEvents:
+							// 		currentDragState.isDragged && box.id === currentDragState.id
+							// 			? "all"
+							// 			: "none",
+							// 	transform:
+							// 		currentDragState.isDragged && box.id === currentDragState.id
+							// 			? `translate(-999999999px, -9999999999px)`
+							// 			: "",
+							// }}
 						></DroppedItem>
 					))}
 					{/* // TODO Drag Mask*/}
@@ -149,6 +175,7 @@ const DragDropArea: React.FC<DragDropAreaProps> = ({ row, column, gap }) => {
 						<DragMask
 							dragData={currentDragState}
 							cellData={cellState.current}
+							isLegalPosition={isLegalPostion}
 						></DragMask>
 					)}
 				</div>

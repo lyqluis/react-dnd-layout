@@ -2,8 +2,8 @@ const defaultDragState: DragItemData = {
 	id: 0,
 	x: 0,
 	y: 0,
-	row: 1,
-	column: 1,
+	row: 0,
+	column: 0,
 	isInArea: false,
 	isDragged: false,
 }
@@ -11,7 +11,7 @@ const defaultDragState: DragItemData = {
 class DragMap<T extends DragItem> {
 	map = new Map<string | number, T>()
 
-	get(key: string | number): T | undefined {
+	get(key: string | number): T {
 		return this.map.get(key)!
 	}
 
@@ -35,7 +35,7 @@ type CellPosition = [number, number, number, number] // item 占据的左上 cel
  * 如果 2*2 的 child，那么其 child 为 [0,0,1,1], (0,0)-(1,1)
  */
 const isWithinCell = (parent: CellPosition, child: CellPosition) => {
-	console.log("parent", parent, "child", child)
+	// console.log("parent", parent, "child", child)
 
 	return (
 		parent[0] <= child[0] &&
@@ -45,6 +45,17 @@ const isWithinCell = (parent: CellPosition, child: CellPosition) => {
 	)
 }
 
-// TODO use a map to store dropped dragItem
+// 判断 2 个 box 是否相碰
+const isOverlapping = (box1: CellPosition, box2: CellPosition) => {
+	return !(
+		// not overlapping
+		(
+			box1[2] < box2[0] ||
+			box2[2] < box1[0] ||
+			box1[3] < box2[1] ||
+			box2[3] < box1[1]
+		)
+	)
+}
 
-export { defaultDragState, isWithinCell, dragMap }
+export { defaultDragState, isWithinCell, isOverlapping, dragMap }

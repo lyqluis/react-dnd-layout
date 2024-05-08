@@ -1,7 +1,17 @@
-import { useMemo } from "react"
+import React, { useMemo } from "react"
 import styled from "styled-components"
 
-const DragMask = ({ dragData, cellData }) => {
+interface DragMaskProps {
+	dragData: DragItemData
+	cellData: Cell
+	isLegalPosition: boolean
+}
+
+const DragMask: React.FC<DragMaskProps> = ({
+	dragData,
+	cellData,
+	isLegalPosition,
+}) => {
 	// since grid-area doesn't have animation affect
 	// use width & height & gap to transform instead
 	const { width: cellWidth, height: cellHeight, gap } = cellData
@@ -32,6 +42,7 @@ const DragMask = ({ dragData, cellData }) => {
 		>
 			{JSON.stringify(fixedStyle)}
 			{JSON.stringify(transStyle)}
+			canDrop: {isLegalPosition.toString()}
 		</Wrapper>
 	)
 }
