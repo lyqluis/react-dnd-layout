@@ -18,6 +18,9 @@ const DragDropArea: React.FC<DragDropAreaProps> = ({ row, column, gap }) => {
 	const [droppedList, setDroppedList] = useState<DragItemData[]>([])
 	const removeDroppedItem = (id: number | string) =>
 		setDroppedList((list) => list.filter((item) => item.id !== id))
+	const showDragMask =
+		(currentDragState?.isInArea && currentDragState?.isDragged) ||
+		currentDragState?.isResizing
 
 	// get container's cells' width, height
 	useEffect(() => {
@@ -233,21 +236,22 @@ const DragDropArea: React.FC<DragDropAreaProps> = ({ row, column, gap }) => {
 						></DroppedItem>
 					))}
 					{/* // TODO Drag Mask, maybe use display condition */}
-					{
-						// (currentDragState?.isInArea && currentDragState?.isDragged) ||
-						// 	(currentDragState?.isResizing &&
+					{showDragMask && (
 						<DragMask
 							dragData={currentDragState}
 							cellData={cellState.current}
 							isLegalPosition={isLegalPostion}
 						></DragMask>
-						// )
-					}
+					)}
 				</div>
 			</Wrapper>
 			<div>
 				current drag item:
 				{JSON.stringify(currentDragState)}
+				current drag mask:
+				{JSON.stringify(
+					currentDragState?.isInArea && currentDragState?.isDragged
+				)}
 			</div>
 		</>
 	)

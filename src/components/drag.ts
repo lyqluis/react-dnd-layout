@@ -1,7 +1,7 @@
 const defaultDragState: DragItemData = {
 	id: 0,
-	x: 0,
-	y: 0,
+	x: -1,
+	y: -1,
 	row: 0,
 	column: 0,
 	isInArea: false,
