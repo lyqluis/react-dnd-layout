@@ -45,7 +45,7 @@ const isWithinCell = (parent: CellPosition, child: CellPosition) => {
 	)
 }
 
-// 判断 2 个 box 是否相碰
+// 判断 2 个 box 是否相交
 const isOverlapping = (box1: CellPosition, box2: CellPosition) => {
 	return !(
 		// not overlapping

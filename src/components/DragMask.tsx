@@ -18,10 +18,10 @@ const DragMask: React.FC<DragMaskProps> = ({
 	const { row, column, x, y } = dragData
 
 	const fixedStyle = useMemo(() => {
-		const width = row * cellWidth + gap * (row - 1) + "px"
-		const height = column * cellHeight + gap * (column - 1) + "px"
+		const width = column * cellWidth + gap * (column - 1) + "px"
+		const height = row * cellHeight + gap * (row - 1) + "px"
 		return { width, height }
-	}, [dragData.id])
+	}, [dragData.id, dragData.row, dragData.column])
 
 	const transStyle = useMemo(() => {
 		// transform

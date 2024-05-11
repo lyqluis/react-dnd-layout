@@ -62,7 +62,7 @@ const DragDropArea: React.FC<DragDropAreaProps> = ({ row, column, gap }) => {
 
 	const isLegalPostion = useMemo(() => {
 		const { x, y, row, column, id } = currentDragState
-		const currentCellPosition = [x, y, x + row - 1, y + column - 1]
+		const currentCellPosition = [x, y, x + column - 1, y + row - 1]
 		const isInCells = isWithinCell(
 			[0, 0, cellState.current.row - 1, cellState.current.column - 1],
 			currentCellPosition
@@ -71,7 +71,7 @@ const DragDropArea: React.FC<DragDropAreaProps> = ({ row, column, gap }) => {
 			.filter((box) => box.id !== id)
 			.some((box) =>
 				isOverlapping(
-					[box.x, box.y, box.x + box.row - 1, box.y + box.column - 1],
+					[box.x, box.y, box.x + box.column - 1, box.y + box.row - 1],
 					currentCellPosition
 				)
 			)
@@ -79,6 +79,7 @@ const DragDropArea: React.FC<DragDropAreaProps> = ({ row, column, gap }) => {
 		return isInCells && isNotOverlapWithDroppedItem
 	}, [currentDragState])
 
+	// drag event
 	const onDragEnter = (e) => {
 		e.preventDefault()
 		// update current drag item's state
@@ -96,7 +97,7 @@ const DragDropArea: React.FC<DragDropAreaProps> = ({ row, column, gap }) => {
 		e.preventDefault()
 		// TODO throttle
 		// update current drag item's state
-		console.log("drag over", currentDragState)
+		// console.log("drag over", currentDragState)
 		const { offsetX, offsetY } = e.nativeEvent
 		const x = getCellX(offsetX) - getCellX(currentDragState?.offsetX ?? 0)
 		const y = getCellY(offsetY) - getCellY(currentDragState?.offsetY ?? 0)
@@ -129,6 +130,74 @@ const DragDropArea: React.FC<DragDropAreaProps> = ({ row, column, gap }) => {
 		setCurrentDragState(defaultDragState)
 	}
 
+	// resize event
+	const clamp = (val: number, min: number, max: number) =>
+		Math.min(Math.max(val, min), max)
+	const getRowOrColumn = (
+		offsetXOrY: number,
+		widthOrHeight: number,
+		gap: number,
+		max: number
+	) => {
+		const num = Math.ceil(offsetXOrY / (gap + widthOrHeight))
+		return clamp(num, 1, max)
+	}
+
+	const onResizeStart = (e) => {
+		// set current drag state to isResizing
+		const dragMapState = dragMap.get("current")
+		const newDragState = Object.assign({}, dragMapState, { isResizing: true })
+		// console.log(newDragState)
+		// setCurrentDragState(newDragState)
+		setCurrentDragState((preState) => ({
+			...dragMapState,
+			isResizing: true,
+		}))
+	}
+
+	const onResize = (e: React.MouseEvent) => {
+		console.log("on resize", e.nativeEvent)
+		const { offsetX, offsetY } = e.nativeEvent
+		const row = getRowOrColumn(
+			offsetY,
+			cellState.current.height,
+			cellState.current.gap,
+			cellState.current.row
+		)
+		const column = getRowOrColumn(
+			offsetX,
+			cellState.current.width,
+			cellState.current.gap,
+			cellState.current.column
+		)
+		setCurrentDragState((preState) => ({
+			...preState,
+			row,
+			column,
+		}))
+	}
+	const onResizeEnd = (e) => {
+		// set new row & col
+		if (isLegalPostion) {
+			const restDroppedItemList = droppedList.filter(
+				(item) => item.id !== currentDragState.id
+			)
+			// push current drag item to a list
+			setDroppedList([
+				...restDroppedItemList,
+				{ ...currentDragState, isResizing: false },
+			])
+		}
+		// reset current drag state
+		setCurrentDragState((preState) => ({
+			...defaultDragState,
+			isResizing: false,
+		}))
+	}
+	// TODO how to know real resize state
+	// mouse down => mouse move =>
+	// drag start => drag enter => drag over => drop => drag leave => drag end =>
+	// mouse up
 	return (
 		<>
 			<Wrapper
@@ -158,16 +227,22 @@ const DragDropArea: React.FC<DragDropAreaProps> = ({ row, column, gap }) => {
 							data={box}
 							current={currentDragState}
 							onRemove={removeDroppedItem}
+							onResizeStart={onResizeStart}
+							onResize={onResize}
+							onResizeEnd={onResizeEnd}
 						></DroppedItem>
 					))}
-					{/* // TODO Drag Mask*/}
-					{currentDragState?.isInArea && currentDragState?.isDragged && (
+					{/* // TODO Drag Mask, maybe use display condition */}
+					{
+						// (currentDragState?.isInArea && currentDragState?.isDragged) ||
+						// 	(currentDragState?.isResizing &&
 						<DragMask
 							dragData={currentDragState}
 							cellData={cellState.current}
 							isLegalPosition={isLegalPostion}
 						></DragMask>
-					)}
+						// )
+					}
 				</div>
 			</Wrapper>
 			<div>

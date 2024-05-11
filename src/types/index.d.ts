@@ -12,6 +12,7 @@ interface DragItem {
 	row: number // number of rows occupied
 	column: number // number of columns occupied
 	isDragged?: boolean
+	isResizing?: boolean
 }
 
 interface DragItemData extends DragItem {
